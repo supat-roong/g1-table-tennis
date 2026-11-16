@@ -2,7 +2,7 @@
 
     .venv/bin/python -m g1tt.mocap            # writes data/ttmd6_g1.npz
 
-TTMD6 (Shanghai University of Sport, Sci. Rep. 14:3549, 2024, CC BY 4.0)
+TTMD6 (Shanghai University of Sport, Sci. Rep. 14:3549, 2024; article CC BY 4.0)
 has 12,000 strokes of 6 types by 40 right-handed players: 14 joints and the
 paddle centre at 120 Hz, millimetres, z up. Joint order, inferred from the
 data: 0 hip centre, 1 neck/head, 2-4 left shoulder/elbow/wrist, 5-7 right

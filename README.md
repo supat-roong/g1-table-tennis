@@ -59,6 +59,12 @@ Download TTMD6 (Zhang et al., Sci. Rep. 14:3549, 2024; data on Baidu Pan from th
 .venv/bin/python -m g1tt.mocap        # writes data/ttmd6_g1.npz (~30 s)
 ```
 
+Or download the result: the retargeted strokes are the Kaggle dataset [TTMD6 Table Tennis Strokes on a Unitree G1](https://www.kaggle.com/datasets/supatroongpraiwan/ttmd6-g1-strokes).
+
+```bash
+kaggle datasets download supatroongpraiwan/ttmd6-g1-strokes -p data --unzip
+```
+
 ## Train
 
 On a laptop CPU (9 worker processes, 432 matches):
@@ -78,10 +84,9 @@ On the GPU the whole match (both robots, the ball, the rally rules, the rewards 
 
 To run the notebook yourself:
 
-1. Build `data/ttmd6_g1.npz` as in [Human motion data](#human-motion-data).
-2. Upload it to Kaggle as a private dataset (Datasets, New Dataset).
-3. Open the notebook and click Copy & Edit. In the side panel, use Add Input to attach your dataset, set Accelerator to GPU T4 x2, and turn Internet on. Kaggle allows GPU and Internet only on phone-verified accounts.
-4. Change the settings cell if you want (run name, `g1tt.gpu.train_gpu` arguments), then Save Version, Save & Run All.
+1. Open the notebook and click Copy & Edit. The [strokes dataset](https://www.kaggle.com/datasets/supatroongpraiwan/ttmd6-g1-strokes) comes attached.
+2. In the side panel, set Accelerator to GPU T4 x2 and turn Internet on. Kaggle allows GPU and Internet only on phone-verified accounts.
+3. Change the settings cell if you want (run name, `g1tt.gpu.train_gpu` arguments), then Save Version, Save & Run All.
 
 Or start it from the command line, with the [kaggle CLI](https://github.com/Kaggle/kaggle-api) and a token in `~/.kaggle`:
 
@@ -92,7 +97,7 @@ kaggle kernels output <kaggle-user>/unitree-g1-humanoids-learn-table-tennis-rall
 python tools/kaggle/push.py --user <kaggle-user> --name g1 --resume runs/kaggle/runs/g1               # next session
 ```
 
-The first push uploads `data/ttmd6_g1.npz` to your private dataset `<kaggle-user>/g1tt-strokes`. Every push publishes the notebook, built from [tools/kaggle/train_notebook.py](tools/kaggle/train_notebook.py), and starts a run; add `--private` to keep it private. `--resume` uploads the run folder as the private dataset `<kaggle-user>/g1tt-runs`.
+The notebook attaches the public strokes dataset (`--strokes` to use your own). Every push publishes the notebook, built from [tools/kaggle/train_notebook.py](tools/kaggle/train_notebook.py), and starts a run; add `--private` to keep it private. `--resume` uploads the run folder as the private dataset `<kaggle-user>/g1tt-runs`.
 
 On Kaggle's GPU T4 x2 an iteration is 2,048 matches (98k decisions, 4.7 times a CPU iteration) and takes about 5.6 s: 17,500 decisions per second, 2.5 times the M4. Kaggle stops a session after 12 hours, so training saves and stops at 11 hours (about 7,000 iterations); the default 12,000 iterations (1.2 billion decisions, worth 57,000 on the CPU) take about 19 GPU hours over two sessions.
 
@@ -142,6 +147,6 @@ Matches are seeded and the policy is deterministic, so `--seed S --matches 1` re
 
 ## Credits
 
-Human strokes: TTMD6, Zhang, Ren, Lin, Xing and Ren, "Table tennis motion recognition based on the bat trajectory using varying-length-input convolution neural networks", Scientific Reports 14:3549 (2024), CC BY 4.0. The dataset is not redistributed here.
+Human strokes: TTMD6, Zhang, Ren, Lin, Xing and Ren, "Table tennis motion recognition based on the bat trajectory using varying-length-input convolution neural networks", Scientific Reports 14:3549 (2024), [doi:10.1038/s41598-024-54150-5](https://doi.org/10.1038/s41598-024-54150-5). The article is CC BY 4.0; the paper states no separate license for the data. The original recordings are not redistributed; the strokes retargeted onto the G1 (joint angles and paddle path only) are published, with this attribution, as [a Kaggle dataset](https://www.kaggle.com/datasets/supatroongpraiwan/ttmd6-g1-strokes).
 
 The G1 model is from [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie) (BSD-3-Clause, Unitree Robotics). The approach follows [HITTER](https://arxiv.org/abs/2508.21043) and [LATENT](https://arxiv.org/abs/2603.12686), and the sampling [Success Guided Sampling](https://arxiv.org/abs/2610.12465); no code from them is used.

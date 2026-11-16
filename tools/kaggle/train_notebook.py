@@ -26,10 +26,11 @@
 #
 # ## Run it yourself
 #
-# 1. The human strokes come from TTMD6 (Shanghai University of Sport, CC BY 4.0). Build them on your
-#    machine (see "Human motion data" in the README) and upload `data/ttmd6_g1.npz` as a Kaggle dataset.
-# 2. Copy this notebook, then in the side panel: **Add Input** your strokes dataset, set
-#    **Accelerator** to GPU T4 x2, and turn **Internet** on (phone-verified account needed).
+# 1. Copy this notebook. The human strokes come attached: the dataset
+#    [TTMD6 Table Tennis Strokes on a Unitree G1](https://www.kaggle.com/datasets/supatroongpraiwan/ttmd6-g1-strokes), retargeted from TTMD6
+#    (Zhang et al., Scientific Reports 14:3549, 2024).
+# 2. In the side panel, set **Accelerator** to GPU T4 x2 and turn **Internet** on (phone-verified
+#    account needed).
 # 3. Edit the settings below if you like, then **Save Version → Save & Run All**.
 #
 # Kaggle stops a session after 12 hours; training saves and stops at `MAX_HOURS`. A session does about
@@ -99,17 +100,18 @@ run("bash tools/fetch_assets.sh")
 run(f"{PY} -c \"import jax, torch, mujoco; print(jax.devices(), torch.cuda.get_device_name(0), mujoco.__version__)\"")
 
 # %% [markdown]
-# ## 3. Find your human strokes
+# ## 3. Find the human strokes
 #
-# Any attached dataset with a `ttmd6_g1.npz` works: the retargeted TTMD6 strokes, joint angles and
-# paddle path at 50 Hz with each stroke's contact frame. It is copied to `data/ttmd6_g1.npz`.
+# `ttmd6_g1.npz` from the attached strokes dataset: the retargeted TTMD6 strokes, G1 joint angles and
+# paddle path at 50 Hz with each stroke's contact frame. It is copied to `data/ttmd6_g1.npz`. Your
+# own build (`python -m g1tt.mocap`) works too, attached as a dataset in its place.
 
 # %%
 found = glob.glob("/kaggle/input/**/ttmd6_g1.npz", recursive=True)
 if not found:
     raise FileNotFoundError(
-        "No ttmd6_g1.npz under /kaggle/input. Build it with g1tt.mocap (see the README), upload it as a "
-        "dataset, and attach it with Add Input."
+        "No ttmd6_g1.npz under /kaggle/input. Attach the dataset supatroongpraiwan/ttmd6-g1-strokes "
+        "with Add Input."
     )
 os.makedirs(f"{CODE}/data", exist_ok=True)
 shutil.copy(found[0], f"{CODE}/data/ttmd6_g1.npz")

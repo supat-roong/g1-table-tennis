@@ -4,10 +4,10 @@
     python tools/kaggle/push.py --user <kaggle-user> --name g1 --resume runs/g1   # next session
 
 The notebook (train_notebook.py, converted to .ipynb) is public and clones the
-code from GitHub at the current commit, so push your commits first. The human
-strokes data/ttmd6_g1.npz go to your private dataset <user>/g1tt-strokes,
-uploaded once. With --resume, the run folder (ckpt.pt and logs) goes to the
-private dataset <user>/g1tt-runs. Download the result with
+code from GitHub at the current commit, so push your commits first. It attaches
+the public strokes dataset (--strokes, default supatroongpraiwan/ttmd6-g1-strokes).
+With --resume, the run folder (ckpt.pt and logs) goes to the private dataset
+<user>/g1tt-runs. Download the result with
 `kaggle kernels output <user>/unitree-g1-humanoids-learn-table-tennis-rallies -p runs/kaggle`.
 Needs the kaggle CLI (pip install kaggle, or set KAGGLE_CLI="uvx kaggle") and a
 token in ~/.kaggle.
@@ -32,6 +32,7 @@ NOTEBOOK = Path(__file__).with_name("train_notebook.py")
 TITLE = "Unitree G1 Humanoids Learn Table Tennis Rallies"
 SLUG = "unitree-g1-humanoids-learn-table-tennis-rallies"  # Kaggle derives the URL from the title
 KEYWORDS = ["reinforcement learning", "robotics", "pytorch", "jax", "simulations"]  # Kaggle allows at most 5 tags
+STROKES = "supatroongpraiwan/ttmd6-g1-strokes"  # TTMD6 strokes retargeted onto the G1 (python -m g1tt.mocap)
 
 
 def kaggle(*args: str) -> str:
@@ -99,6 +100,7 @@ def main():
   p.add_argument("--max-hours", type=float, default=11.0, help="stop and save ckpt.pt before Kaggle's 12 h limit")
   p.add_argument("--resume", help="local run folder to continue (with ckpt.pt)")
   p.add_argument("--private", action="store_true", help="keep the notebook private (default: public)")
+  p.add_argument("--strokes", default=STROKES, help="Kaggle dataset with ttmd6_g1.npz")
   a = p.parse_args()
 
   rev = git("rev-parse", "HEAD")
@@ -108,13 +110,7 @@ def main():
 
   with tempfile.TemporaryDirectory() as tmp:
     tmp = Path(tmp)
-    sources = [f"{a.user}/g1tt-strokes"]
-    if not dataset_ready(sources[0]):
-      strokes = ROOT / "data" / "ttmd6_g1.npz"
-      assert strokes.exists(), "build the human strokes first (python -m g1tt.mocap)"
-      (tmp / "strokes").mkdir()
-      shutil.copy(strokes, tmp / "strokes")
-      upload_dataset(tmp / "strokes", sources[0], "g1tt-strokes", "ttmd6_g1", "other")
+    sources = [a.strokes]
 
     if a.resume:
       run_dir = Path(a.resume)
