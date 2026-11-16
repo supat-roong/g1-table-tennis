@@ -33,7 +33,7 @@
 # 3. Edit the settings below if you like, then **Save Version → Save & Run All**.
 #
 # Kaggle stops a session after 12 hours; training saves and stops at `MAX_HOURS`. A session does about
-# 7,000 iterations, and the full 21,000 take about 33 GPU hours: attach the previous output as a
+# 7,000 iterations, and the full 12,000 take about 19 GPU hours: attach the previous output as a
 # dataset and set `RESUME = True` to continue. Results land in the notebook output under `runs/<name>/`.
 #
 # ## Settings

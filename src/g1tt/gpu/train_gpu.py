@@ -6,7 +6,8 @@
 Same options, log rows and checkpoint format as g1tt.train, so runs move
 between a laptop and a GPU machine: checkpoints are saved with CPU tensors and
 resume anywhere. One iteration here is 2048 matches (98k decisions), 4.7 times a
-CPU iteration, so the default 21000 iterations match the CPU's 100000.
+CPU iteration: the default 12000 iterations (1.2 billion decisions) are worth
+57000 on the CPU.
 --max-hours saves and stops before a session limit (Kaggle: 12 h); --resume
 picks up from runs/<tag>/ckpt.pt.
 """
@@ -145,7 +146,7 @@ class TorchPPO(PPO):
 def main():
   ap = argparse.ArgumentParser()
   add_training_args(ap)
-  ap.set_defaults(iters=21000)
+  ap.set_defaults(iters=12000)
   ap.add_argument("--matches", type=int, default=2048, help="matches on the GPU (two robots each)")
   ap.add_argument("--impl", default="warp", help="MJX physics: warp (NVIDIA GPU) or jax")
   ap.add_argument("--plan-k", type=int, default=0, help="balls planned per step (0: matches / 4)")

@@ -94,7 +94,7 @@ python tools/kaggle/push.py --user <kaggle-user> --name g1 --resume runs/kaggle/
 
 The first push uploads `data/ttmd6_g1.npz` to your private dataset `<kaggle-user>/g1tt-strokes`. Every push publishes the notebook, built from [tools/kaggle/train_notebook.py](tools/kaggle/train_notebook.py), and starts a run; add `--private` to keep it private. `--resume` uploads the run folder as the private dataset `<kaggle-user>/g1tt-runs`.
 
-On Kaggle's GPU T4 x2 an iteration is 2,048 matches (98k decisions, 4.7 times a CPU iteration) and takes about 5.6 s: 17,500 decisions per second, 2.5 times the M4. Kaggle stops a session after 12 hours, so training saves and stops at 11 hours (about 7,000 iterations); the default 21,000 iterations, the same experience as 100,000 on the CPU, take about 33 GPU hours over three sessions.
+On Kaggle's GPU T4 x2 an iteration is 2,048 matches (98k decisions, 4.7 times a CPU iteration) and takes about 5.6 s: 17,500 decisions per second, 2.5 times the M4. Kaggle stops a session after 12 hours, so training saves and stops at 11 hours (about 7,000 iterations); the default 12,000 iterations (1.2 billion decisions, worth 57,000 on the CPU) take about 19 GPU hours over two sessions.
 
 ## Results
 
