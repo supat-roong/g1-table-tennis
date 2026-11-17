@@ -759,6 +759,8 @@ def main():
   ap.add_argument("--seed", type=int, default=0)
   ap.add_argument("--dr-scale", type=float, default=1.0)
   ap.add_argument("--video", default=None, help="film match 0")
+  ap.add_argument("--width", type=int, default=1280, help="video width in pixels")
+  ap.add_argument("--height", type=int, default=720, help="video height in pixels")
   ap.add_argument("--find-rally", type=int, default=0, help="search this many seeds (1 match each) and film the longest")
   ap.add_argument("--wide-frac", type=float, default=0.10, help="share of returns aimed wide, beyond standing reach")
   ap.add_argument("--bh-frac", type=float, default=0.25, help="share of returns aimed at the partner's backhand")
@@ -769,7 +771,7 @@ def main():
     print(f"longest rally: {k} returns ({wd} with footwork), seed {seed}, ends at {t:.1f} s")
     args.seed, args.seconds, args.matches = seed, t + 1.0, 1
     args.video = args.video or f"renders/rally_{k}.mp4"
-  res, log = run(args.ckpt, args.matches, args.seconds, args.seed, args.dr_scale, args.video,
+  res, log = run(args.ckpt, args.matches, args.seconds, args.seed, args.dr_scale, args.video, args.width, args.height,
                  wide_frac=args.wide_frac, bh_frac=args.bh_frac)
   print(json.dumps(res, indent=1))
   if args.video:
