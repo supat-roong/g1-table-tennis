@@ -68,16 +68,25 @@ PY = sys.executable
 CODE = "/kaggle/tmp/g1-table-tennis"  # outside /kaggle/working, so only runs/ is saved as output
 RUNS = "/kaggle/working/runs"
 QUIET = ("iterations limit reached", "warn_overflow", "OverflowType", "load on device")  # MuJoCo Warp solver notices
+PRINT_EVERY = 250  # training prints one line per this many iterations; log.jsonl keeps every logged one
 
 
-def run(cmd, cwd=CODE, quiet=False):
-    """Run a shell command, stream its output, and stop the notebook if it fails."""
+def training_line(line):
+    """Hide MuJoCo Warp solver notices and all but every PRINT_EVERY-th iteration line."""
+    if any(q in line for q in QUIET):
+        return False
+    f = line.split()
+    return not (len(f) > 1 and f[0] == "it" and f[1].isdigit() and int(f[1]) % PRINT_EVERY)
+
+
+def run(cmd, cwd=CODE, show=None, env=None):
+    """Run a shell command, stream its output (lines `show` accepts), and stop the notebook if it fails."""
     print(f"$ {cmd}", flush=True)
     env = {**os.environ, "PYTHONWARNINGS": "ignore", "XLA_PYTHON_CLIENT_PREALLOCATE": "false",
-           "XLA_PYTHON_CLIENT_MEM_FRACTION": ".45"}  # JAX and PyTorch share the GPU
+           "XLA_PYTHON_CLIENT_MEM_FRACTION": ".45", **(env or {})}  # JAX and PyTorch share the GPU
     p = subprocess.Popen(cmd, shell=True, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     for line in p.stdout:
-        if not (quiet and any(q in line for q in QUIET)):
+        if show is None or show(line):
             print(line, end="", flush=True)
     if p.wait():
         raise subprocess.CalledProcessError(p.returncode, cmd)
@@ -90,11 +99,12 @@ run("nvidia-smi --query-gpu=name,memory.total --format=csv,noheader; nproc")
 # %% [markdown]
 # ## 2. Install
 #
-# MuJoCo, MJX with MuJoCo Warp for the physics on the GPU, and JAX with CUDA. Kaggle's PyTorch already
-# has CUDA. Then the Unitree G1 model from MuJoCo Menagerie (BSD-3-Clause).
+# MuJoCo, and MJX with MuJoCo Warp for the physics on the GPU. Kaggle's JAX and PyTorch already have
+# CUDA (installing a second JAX CUDA plugin makes every process report a plugin clash). Then the
+# Unitree G1 model from MuJoCo Menagerie (BSD-3-Clause).
 
 # %%
-run(f"{PY} -m pip install -q 'mujoco==3.14.0' 'mujoco-mjx==3.14.0' warp-lang 'jax[cuda12]' pytest")
+run(f"{PY} -m pip install -q 'mujoco==3.14.0' 'mujoco-mjx==3.14.0' warp-lang pytest")
 run(f"{PY} -m pip install -q --no-deps -e .")
 run("bash tools/fetch_assets.sh")
 run(f"{PY} -c \"import jax, torch, mujoco; print(jax.devices(), torch.cuda.get_device_name(0), mujoco.__version__)\"")
@@ -140,7 +150,8 @@ run(f"{PY} -m pytest -q tests/test_gpu_duel.py tests/test_ball_jit.py")
 # | Return mix | 65% to the partner's forehand, 25% to its backhand, 10% wide of its reach | Both strokes and footwork, in every rally |
 # | Sampling | Success Guided Sampling picks half the serves and returns near 50% success | Practice where learning happens |
 #
-# Each log line is one update of 98,304 decisions (2,048 matches x 2 robots x 24 steps):
+# Each iteration is one update of 98,304 decisions (2,048 matches x 2 robots x 24 steps). A line is
+# printed every 250 iterations (`PRINT_EVERY`); the curves below use every logged one:
 #
 # - `hit`, `land`: share of balls hit, and landed on the other half
 # - `rally`: mean returns per rally, `bhp`: backhands the partner can play
@@ -157,7 +168,7 @@ if RESUME:
     resume = "--resume"
 
 run(f"{PY} -m g1tt.gpu.train_gpu --tag {RUN_NAME} --runs {RUNS} {TRAIN_ARGS} --max-hours {MAX_HOURS} {resume}",
-    quiet=True)
+    show=training_line)
 
 # %% [markdown]
 # ## 6. Training curves
@@ -182,13 +193,20 @@ plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# ## 7. A match
+# ## 7. A rally
 #
-# The deterministic policy plays 4 matches of 60 s on the CPU with the full rules, aiming like in
-# training. `rally_mean_returns` counts returns that landed; `ends` says how rallies ended.
+# The deterministic policy plays 8 matches of 60 s on the CPU with the full rules, aiming like in
+# training, one seed each. The match with the longest rally is replayed and filmed up to that rally's
+# end (runs are seeded, so the replay is the same match), and saved as `runs/<name>/rally.mp4`.
 
 # %%
-run(f"{PY} -m g1tt.duel {RUNS}/{RUN_NAME}/ckpt.pt --matches 4 --seconds 60")
+from IPython.display import Video
+
+video = f"{RUNS}/{RUN_NAME}/rally.mp4"
+run(f"{PY} -m g1tt.duel {RUNS}/{RUN_NAME}/ckpt.pt --find-rally 8 --seconds 60 --video {video} --width 640 --height 360",
+    show=lambda line: line.startswith("longest rally"),
+    env={"MUJOCO_GL": "egl"})
+Video(video, embed=True, width=640)
 
 # %% [markdown]
 # ## What next
