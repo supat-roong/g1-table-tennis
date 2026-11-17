@@ -94,10 +94,10 @@ Or start it from the command line, with the [kaggle CLI](https://github.com/Kagg
 git push   # the notebook clones the current commit from GitHub
 python tools/kaggle/push.py --user <kaggle-user> --name g1
 kaggle kernels output <kaggle-user>/unitree-g1-humanoids-learn-table-tennis-rallies -p runs/kaggle   # when it finishes
-python tools/kaggle/push.py --user <kaggle-user> --name g1 --resume runs/kaggle/runs/g1               # next session
+python tools/kaggle/push.py --user <kaggle-user> --name g1 --resume                                  # next session
 ```
 
-The notebook attaches the public strokes dataset (`--strokes` to use your own). Every push publishes the notebook, built from [tools/kaggle/train_notebook.py](tools/kaggle/train_notebook.py), and starts a run; add `--private` to keep it private. `--resume` uploads the run folder as the private dataset `<kaggle-user>/g1tt-runs`.
+The notebook attaches the public strokes dataset (`--strokes` to use your own). Every push publishes the notebook, built from [tools/kaggle/train_notebook.py](tools/kaggle/train_notebook.py), and starts a run; add `--private` to keep it private. `--resume` attaches the notebook's own latest output and continues from it, so each session is a new version of the same notebook and the training log carries on; `--resume-from <run folder>` continues a local run instead, uploaded as the private dataset `<kaggle-user>/g1tt-runs`.
 
 On Kaggle's GPU T4 x2 an iteration is 2,048 matches (98k decisions, 4.7 times a CPU iteration) and takes about 5.6 s: 17,500 decisions per second, 2.5 times the M4. Kaggle stops a session after 12 hours, so training saves and stops at 11 hours (about 7,000 iterations); the default 12,000 iterations (1.2 billion decisions, worth 57,000 on the CPU) take about 19 GPU hours over two sessions.
 

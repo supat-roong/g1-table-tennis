@@ -1,12 +1,15 @@
 """Train on a Kaggle GPU: publish the training notebook and start it.
 
     python tools/kaggle/push.py --user <kaggle-user> --name g1
-    python tools/kaggle/push.py --user <kaggle-user> --name g1 --resume runs/g1   # next session
+    python tools/kaggle/push.py --user <kaggle-user> --name g1 --resume   # next session
 
 The notebook (train_notebook.py, converted to .ipynb) is public and clones the
 code from GitHub at the current commit, so push your commits first. It attaches
 the public strokes dataset (--strokes, default supatroongpraiwan/ttmd6-g1-strokes).
-With --resume, the run folder (ckpt.pt and logs) goes to the private dataset
+With --resume, the new version attaches the notebook's own latest output
+(runs/<name>/ with ckpt.pt and log.jsonl) and continues from it, so a run is
+chained one session at a time with nothing uploaded. --resume-from DIR
+continues a local run folder instead, uploaded as the private dataset
 <user>/g1tt-runs. Download the result with
 `kaggle kernels output <user>/unitree-g1-humanoids-learn-table-tennis-rallies -p runs/kaggle`.
 Needs the kaggle CLI (pip install kaggle, or set KAGGLE_CLI="uvx kaggle") and a
@@ -98,7 +101,8 @@ def main():
   p.add_argument("--name", default="g1", help="run name (runs/<name>/)")
   p.add_argument("--args", default="", help="extra g1tt.gpu.train_gpu arguments")
   p.add_argument("--max-hours", type=float, default=11.0, help="stop and save ckpt.pt before Kaggle's 12 h limit")
-  p.add_argument("--resume", help="local run folder to continue (with ckpt.pt)")
+  p.add_argument("--resume", action="store_true", help="continue from this notebook's latest output")
+  p.add_argument("--resume-from", help="local run folder to continue (with ckpt.pt), uploaded as a private dataset")
   p.add_argument("--private", action="store_true", help="keep the notebook private (default: public)")
   p.add_argument("--strokes", default=STROKES, help="Kaggle dataset with ttmd6_g1.npz")
   a = p.parse_args()
@@ -110,10 +114,12 @@ def main():
 
   with tempfile.TemporaryDirectory() as tmp:
     tmp = Path(tmp)
-    sources = [a.strokes]
+    sources, kernels = [a.strokes], []
 
     if a.resume:
-      run_dir = Path(a.resume)
+      kernels.append(f"{a.user}/{SLUG}")
+    elif a.resume_from:
+      run_dir = Path(a.resume_from)
       assert (run_dir / "ckpt.pt").exists(), f"no {run_dir}/ckpt.pt"
       dst = tmp / "runs" / "runs" / a.name
       dst.mkdir(parents=True)
@@ -125,7 +131,7 @@ def main():
 
     code = NOTEBOOK.read_text()
     for name, value in [("REPO", repo), ("REF", rev), ("RUN_NAME", a.name), ("TRAIN_ARGS", a.args),
-                        ("MAX_HOURS", a.max_hours), ("RESUME", bool(a.resume))]:
+                        ("MAX_HOURS", a.max_hours), ("RESUME", bool(a.resume or a.resume_from))]:
       code = set_setting(code, name, value)
     kdir = tmp / "kernel"
     kdir.mkdir()
@@ -133,7 +139,7 @@ def main():
     (kdir / "kernel-metadata.json").write_text(json.dumps({
       "id": f"{a.user}/{SLUG}", "title": TITLE, "code_file": f"{SLUG}.ipynb",
       "language": "python", "kernel_type": "notebook", "is_private": a.private, "enable_gpu": True,
-      "enable_internet": True, "dataset_sources": sources, "keywords": KEYWORDS,
+      "enable_internet": True, "dataset_sources": sources, "kernel_sources": kernels, "keywords": KEYWORDS,
       "machine_shape": "NvidiaTeslaT4",
     }))
     kaggle("kernels", "push", "-p", str(kdir))

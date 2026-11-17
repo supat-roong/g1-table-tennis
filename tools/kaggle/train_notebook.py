@@ -34,15 +34,15 @@
 # 3. Edit the settings below if you like, then **Save Version → Save & Run All**.
 #
 # Kaggle stops a session after 12 hours; training saves and stops at `MAX_HOURS`. A session does about
-# 7,000 iterations, and the full 12,000 take about 19 GPU hours: attach the previous output as a
-# dataset and set `RESUME = True` to continue. Results land in the notebook output under `runs/<name>/`.
+# 7,000 iterations, and the full 12,000 take about 19 GPU hours: to continue, add this notebook's own
+# output as an input (**Add Input → Notebooks**) and set `RESUME = True`. Results land in the notebook output under `runs/<name>/`.
 #
 # ## Settings
 #
 # - `REF`: the commit this run uses, so the result is reproducible.
 # - `TRAIN_ARGS`: any `g1tt.gpu.train_gpu` option; the defaults are the recipe.
 #   `python -m g1tt.gpu.train_gpu --help` lists them.
-# - `RESUME`: continue `runs/<RUN_NAME>/ckpt.pt` from an attached dataset.
+# - `RESUME`: continue `runs/<RUN_NAME>/ckpt.pt` from an attached notebook output or dataset.
 
 # %%
 REPO = "https://github.com/supat-roong/g1-table-tennis"
@@ -50,7 +50,7 @@ REF = "main"  # branch, tag or commit to train
 RUN_NAME = "g1"
 TRAIN_ARGS = ""  # extra g1tt.gpu.train_gpu arguments, e.g. "--iters 7000 --seed 1"
 MAX_HOURS = 11.0  # save ckpt.pt and stop before Kaggle's 12 hour limit
-RESUME = False  # continue runs/<RUN_NAME>/ckpt.pt from an attached dataset
+RESUME = False  # continue runs/<RUN_NAME>/ckpt.pt from an attached notebook output or dataset
 
 # %% [markdown]
 # ## 1. Get the code
