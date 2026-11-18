@@ -58,6 +58,7 @@ RESUME = False  # continue runs/<RUN_NAME>/ckpt.pt from an attached notebook out
 # Clone the repository at `REF` and show the hardware.
 
 # %%
+import collections
 import glob
 import os
 import shutil
@@ -67,28 +68,33 @@ import sys
 PY = sys.executable
 CODE = "/kaggle/tmp/g1-table-tennis"  # outside /kaggle/working, so only runs/ is saved as output
 RUNS = "/kaggle/working/runs"
-QUIET = ("iterations limit reached", "warn_overflow", "OverflowType", "load on device")  # MuJoCo Warp solver notices
 PRINT_EVERY = 250  # training prints one line per this many iterations; log.jsonl keeps every logged one
 
 
 def training_line(line):
-    """Hide MuJoCo Warp solver notices and all but every PRINT_EVERY-th iteration line."""
-    if any(q in line for q in QUIET):
-        return False
+    """Only the trainer's own lines, and of its iteration lines every PRINT_EVERY-th. MuJoCo Warp prints
+    solver notices from the GPU, chopped and interleaved, so they are dropped rather than matched."""
     f = line.split()
-    return not (len(f) > 1 and f[0] == "it" and f[1].isdigit() and int(f[1]) % PRINT_EVERY)
+    if len(f) > 1 and f[0] == "it" and f[1].isdigit():
+        return int(f[1]) % PRINT_EVERY == 0 and line.rstrip().endswith(tuple("0123456789"))
+    return line.startswith(("resumed from", "initialised from", "serve level", "stopping at"))
 
 
 def run(cmd, cwd=CODE, show=None, env=None):
-    """Run a shell command, stream its output (lines `show` accepts), and stop the notebook if it fails."""
+    """Run a shell command and stream its output (the lines `show` accepts). If it fails, print its last
+    50 lines and stop the notebook."""
     print(f"$ {cmd}", flush=True)
     env = {**os.environ, "PYTHONWARNINGS": "ignore", "XLA_PYTHON_CLIENT_PREALLOCATE": "false",
            "XLA_PYTHON_CLIENT_MEM_FRACTION": ".45", **(env or {})}  # JAX and PyTorch share the GPU
     p = subprocess.Popen(cmd, shell=True, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    tail = collections.deque(maxlen=50)
     for line in p.stdout:
+        tail.append(line)
         if show is None or show(line):
             print(line, end="", flush=True)
     if p.wait():
+        if show is not None:
+            print("".join(tail), end="")
         raise subprocess.CalledProcessError(p.returncode, cmd)
 
 
